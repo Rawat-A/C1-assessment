@@ -1,14 +1,16 @@
-# All AI Prompts — C1 Assessment (Databricks Medallion Pipeline)
+# AI Prompts — Project Creation Only
 
-Chronological list of prompts given to Cursor AI to complete this project.  
+Core prompts used to **build** the Databricks medallion pipeline.  
+Excludes setup questions, Git troubleshooting, Databricks path/debugging prompts, and follow-up cross-questions.
+
 **Repo:** https://github.com/Rawat-A/C1-assessment  
-**Tool:** Cursor IDE (AI agent)
+**Tool:** Cursor IDE (AI agent)  
+**Total prompts:** 4
 
 ---
 
-## Phase 1 — Project scaffold & standards
+## Prompt 1 — Project scaffold & coding standards
 
-### Prompt 1
 ```
 I'm building a Databricks medallion architecture data pipeline (Bronze → Silver → Gold → Dashboard) 
 for an e-commerce company. Source data: customers.csv, orders.csv, products.csv, ingested from S3/DBFS.
@@ -81,11 +83,12 @@ Also create a .cursorrules file at the root with these project standards:
 - All SQL should be formatted with uppercase keywords and one clause per line
 ```
 
+**Outcome:** Full folder structure, placeholder files, `.cursorrules`
+
 ---
 
-## Phase 2 — Project context & specification
+## Prompt 2 — Project context & functional specification
 
-### Prompt 2
 ```
 Populate two files with real content (not placeholders):
 
@@ -109,26 +112,55 @@ Populate two files with real content (not placeholders):
    - Gold layer: three aggregation tables (schemas below)
    - Dashboard: 3+ SQL queries for Databricks SQL visualizations (bar, histogram, pie)
 
-[Schemas for customers, orders, products, and Gold tables included in prompt]
+Schemas to use:
+
+customers.csv: customer_id (INT, PK), customer_name (STRING), email (STRING), 
+country (STRING), signup_date (DATE), customer_segment (STRING: Premium/Standard/Basic), 
+lifetime_value (DECIMAL)
+
+orders.csv: order_id (INT, PK), customer_id (INT, FK), order_date (DATE), 
+product_id (INT, FK), quantity (INT), unit_price (DECIMAL), total_amount (DECIMAL), 
+order_status (STRING: Pending/Completed/Cancelled), payment_date (DATE, nullable)
+
+products.csv: product_id (INT, PK), product_name (STRING), category (STRING), 
+price (DECIMAL), cost (DECIMAL), stock_quantity (INT), reorder_level (INT)
+
+Gold table schemas:
+A) sales_by_product: product_id, product_name, category, total_orders, total_revenue, avg_order_value
+B) revenue_by_customer: customer_id, customer_name, customer_segment, total_orders, 
+   total_revenue, avg_order_value, lifetime_value_actual
+C) customer_segmentation: segment_type (High-Value/Repeat/One-Time/Inactive), 
+   customer_count, avg_revenue, total_revenue
+
+Keep both files under 500 words each — they're meant to be pasted as context, not read as essays.
 ```
+
+**Outcome:** `project-context.md`, `spec.md`
 
 ---
 
-## Phase 3 — Sample data generation
+## Prompt 3 — Sample data generation
 
-### Prompt 3
 ```
 Using the project context and spec above, write src/data_generation/generate_sample_data.py.
 
 Requirements:
 - Use pandas + Faker to generate three CSVs into a local ./data/ folder:
-  1. customers.csv — 10,000 rows [schema details]
-  2. orders.csv — 100,000 rows [schema details]
-  3. products.csv — 500 rows [schema details]
+  1. customers.csv — 10,000 rows: customer_id (INT, PK, sequential), customer_name, email, 
+     country, signup_date (DATE between 2020-01-01 and today), 
+     customer_segment (Premium/Standard/Basic, weighted ~20/50/30), lifetime_value (DECIMAL)
+  2. orders.csv — 100,000 rows: order_id (INT, PK, sequential), customer_id (FK), 
+     order_date (DATE, must be >= that customer's signup_date), product_id (FK), 
+     quantity (INT 1-10), unit_price (DECIMAL, from product), total_amount (= quantity * unit_price), 
+     order_status (Pending/Completed/Cancelled, weighted ~15/75/10), 
+     payment_date (DATE, nullable, null if status != Completed)
+  3. products.csv — 500 rows: product_id (INT, PK, sequential), product_name, category, 
+     price (DECIMAL), cost (DECIMAL, always < price), stock_quantity (INT), reorder_level (INT)
 
 - After generating clean data, intentionally corrupt a copy to introduce these exact issues 
-  (do this in a separate function, e.g. inject_quality_issues()):
-
+  (do this in a separate function, e.g. inject_quality_issues(), so the "clean generation" 
+  and "issue injection" logic are clearly separated):
+  
   customers.csv:
     - 50 rows: set email to NULL
     - 10 rows: duplicate an existing customer_id (append as extra rows, don't overwrite)
@@ -136,201 +168,54 @@ Requirements:
   orders.csv:
     - 100 rows: set customer_id to NULL
     - 200 rows: set product_id to NULL
-    - 50 rows: set customer_id to a value that does NOT exist in customers.csv
+    - 50 rows: set customer_id to a value that does NOT exist in customers.csv (e.g. 999999+)
     - 30 rows: set product_id to a value that does NOT exist in products.csv
     - 20 rows: duplicate an existing order_id (append as extra rows)
 
 - Make the row selection for corruption random but reproducible (use a fixed random seed, e.g. 42)
-- Print a summary at the end
+- Print a summary at the end: total rows generated per file, and a breakdown of how many rows 
+  have each type of intentional issue
 - Add a header comment block explaining purpose/inputs/outputs, per .cursorrules
 - Add type hints and docstrings on every function
 
 Also create src/data_generation/DATA_GENERATION_NOTES.md explaining:
-- Why each quality issue category was chosen
-- The exact counts injected
+- Why each quality issue category was chosen (ties to real-world data quality problems)
+- The exact counts injected (so Silver layer tests can assert against known numbers)
 - The random seed used, for reproducibility
 ```
 
----
-
-## Phase 4 — Resume & full implementation
-
-### Prompt 4
-```
-lets resume this project 
-what to do next
-```
-
-### Prompt 5
-```
-do it for me
-```
-*(AI implemented: generate CSVs, Bronze, Silver, Gold, dashboard queries, schema.sql, README)*
+**Outcome:** `generate_sample_data.py`, `DATA_GENERATION_NOTES.md`, sample CSVs in `data/`
 
 ---
 
-## Phase 5 — Git & GitHub setup
+## Prompt 4 — Full pipeline implementation
 
-### Prompt 6
 ```
-can i create this repo in gitlab
-```
+Implement the complete medallion pipeline per project-context.md and spec.md:
 
-### Prompt 7
-```
-i am using github 
-my username is Rawat-A and repo name is C1-assessment
-```
+1. Generate sample CSVs (customers, orders, products) if not already present
+2. Bronze layer — ingest_all.py and per-table ingest scripts (raw CSV → Delta, _ingest_timestamp, log row counts)
+3. Silver layer — five quality-check modules + create_silver_tables.py 
+   (completeness, uniqueness, type validation, referential integrity, business logic; 
+   quality_check_result column; never delete rows; quality metrics report)
+4. Gold layer — four SQL aggregation files + create_gold_tables.py
+5. Dashboard — dashboard_queries.sql (bar, histogram, pie) + DASHBOARD_GUIDE.md
+6. database/schema.sql and README.md with setup instructions
 
-### Prompt 8
-```
-cd "c:\Users\Abhishek\Desktop\C1-assessment\databricks-medallion-pipeline"
-
-git branch -M main
-
-git remote add origin https://github.com/<YOUR_USERNAME>/databricks-medallion-pipeline.git
-
-git push -u origin main
-
-i want to run these commands 
-my github username is Rawat-A and repo name is C1-assessment
+Follow .cursorrules: config variables for paths, PEP8, type hints, docstrings, uppercase SQL.
 ```
 
-### Prompt 9
-```
-i check my github i am signed in as Rawat-A and repo name is C1-assesment
-```
-*(Typo in repo name — later renamed to C1-assessment)*
-
-### Prompt 10
-```
-repo name is renamed to C1-assessment
-what next
-```
-
----
-
-## Phase 6 — Databricks setup & execution
-
-### Prompt 11
-```
-how to setup databricks notebook
-```
-
-### Prompt 12
-```
-when i try to open git folder is databricks it is asking for git repository URL, git providrr and git folder name
-```
-
-### Prompt 13
-```
-i created a notebook in databricks now how to fetch the queries in it
-```
-
-### Prompt 14
-```
-path is like https://dbc-4a97fc9a-a0f3.cloud.databricks.com/browse/folders/repos?o=7474654002732453
-```
-
-### Prompt 15
-```
-it is like Workspace
-Users
-abhishek.rawat@tothenew.com
-```
-
-### Prompt 16
-```
-path is correct
-```
-
----
-
-## Phase 7 — Debugging (Databricks errors)
-
-### Prompt 17
-```
-cell 2 output is [CLOUD_FILE_NOT_FOUND] Cloud file is not found. Reason: 
-/Workspace/Users/abhishek.rawat@tothenew.com/C1-assessment/delta/bronze_customers/... 
-(Read-only file system). SQLSTATE: 42K03
-```
-
-### Prompt 18
-```
-cell 1 b output is 
-OSError: [Errno 95] Operation not supported: '/dbfs/FileStore'
-```
-
-### Prompt 19
-```
-cell 1 b output 
-ExecutionError: [DBFS_DISABLED] Public DBFS root is disabled. Access is denied on path: 
-/FileStore/C1-assessment/data SQLSTATE: 56038
-```
-
-### Prompt 20
-```
-cell 2 still showing error 
-[CLOUD_FILE_NOT_FOUND] ... /Workspace/.../delta/bronze_customers/... (Read-only file system)
-```
-
-### Prompt 21
-```
-cell 2 bypass still showing error 
-ImportError: cannot import name 'customers_csv' from 'pipeline_config'
-correct it quickly i don't have enogh cursor token
-```
-
-### Prompt 22
-```
-from gold.create_gold_tables import create_gold_tables
-create_gold_tables(spark) this outputs 
-ImportError: cannot import name 'HIGH_VALUE_REVENUE_THRESHOLD' from 'pipeline_config'
-```
-
-### Prompt 23
-```
-gold command cell run successfully 
-what next
-```
-
-### Prompt 24
-```
-cell 5-7 run scuuessfully and showing table in output
-```
-
-### Prompt 25
-```
-code is pushed to github
-```
-
-### Prompt 26
-```
-where ti find Assessment docs — reflection.md, candidate-info.md, debugging-notes.md, final-ai-usage-summary.md
-```
-
-### Prompt 27
-```
-now i want all the prompt is given to AI to completet this project so i can submit the prompts also 
-give me all prompts in a file
-```
+**Outcome:** Bronze, Silver, Gold, dashboard, `pipeline_config.py`, `schema.sql`, `README.md`
 
 ---
 
 ## Summary
 
-| Phase | Prompts | Main outcome |
-|-------|---------|--------------|
-| Scaffold | 1 | Folder structure, `.cursorrules` |
-| Context & spec | 2 | `project-context.md`, `spec.md` |
-| Data generation | 3 | `generate_sample_data.py`, CSVs with known defects |
-| Implementation | 4–5 | Bronze, Silver, Gold, dashboard, README |
-| Git/GitHub | 6–10 | Repo pushed to `Rawat-A/C1-assessment` |
-| Databricks | 11–16 | Notebook setup, path config |
-| Debugging | 17–22 | Unity Catalog Volumes, path/import fixes |
-| Completion | 23–25 | Gold + dashboard queries validated |
-| Submission | 26–27 | Assessment docs & prompt log |
+| # | Focus | Key deliverables |
+|---|--------|------------------|
+| 1 | Scaffold | Folder structure, `.cursorrules` |
+| 2 | Design | `project-context.md`, `spec.md` |
+| 3 | Data | `generate_sample_data.py`, CSVs with known defects |
+| 4 | Pipeline | Bronze → Silver → Gold → Dashboard code |
 
-**Total prompts:** 27  
-**AI tool:** Cursor IDE (agent mode)  
-**Project:** Databricks medallion e-commerce pipeline (Bronze → Silver → Gold → Dashboard)
+**Note:** Prompt 4 was given as *"do it for me"* in the session, after reviewing the project status. It is expanded here to reflect the full implementation scope that was requested.
