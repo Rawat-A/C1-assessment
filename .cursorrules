@@ -1,0 +1,24 @@
+# Databricks Medallion Pipeline — Project Standards
+
+## Language / stack
+- Python, PySpark, SQL, Delta Lake, Databricks
+
+## Code style
+- Follow PEP 8
+- Use type hints where practical
+- Include docstrings on all functions
+
+## Script header
+- Every script must include a comment block at the top explaining its purpose, inputs, and outputs
+
+## Silver layer quality
+- The Silver layer must NEVER delete bad rows
+- Always flag invalid or suspect records with a `quality_check_result` column
+
+## Paths and configuration
+- No hardcoded file paths
+- Use config variables at the top of each script
+
+## SQL formatting
+- Uppercase SQL keywords
+- One clause per line
