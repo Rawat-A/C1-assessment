@@ -13,7 +13,7 @@ _SRC = Path(__file__).resolve().parents[1]
 if str(_SRC) not in sys.path:
     sys.path.insert(0, str(_SRC))
 
-from pipeline_config import HIGH_VALUE_REVENUE_THRESHOLD, gold_path, silver_path
+from pipeline_config import gold_path, high_value_revenue_threshold, silver_path
 
 GOLD_SQL_DIR = Path(__file__).resolve().parent
 
@@ -46,7 +46,7 @@ def _load_sql(filename: str) -> str:
         SQL query string ready for spark.sql().
     """
     sql = (GOLD_SQL_DIR / filename).read_text(encoding="utf-8")
-    return sql.format(high_value_threshold=HIGH_VALUE_REVENUE_THRESHOLD)
+    return sql.format(high_value_threshold=high_value_revenue_threshold())
 
 
 def create_gold_tables(spark: SparkSession) -> dict[str, int]:

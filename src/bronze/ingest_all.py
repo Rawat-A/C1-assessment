@@ -14,12 +14,7 @@ if str(_SRC) not in sys.path:
 from pyspark.sql import SparkSession
 
 from bronze.ingest_utils import ingest_csv_to_delta
-from pipeline_config import (
-    CUSTOMERS_CSV,
-    ORDERS_CSV,
-    PRODUCTS_CSV,
-    bronze_path,
-)
+from pipeline_config import bronze_path, customers_csv, orders_csv, products_csv
 
 
 def ingest_all(spark: SparkSession) -> dict[str, int]:
@@ -33,13 +28,13 @@ def ingest_all(spark: SparkSession) -> dict[str, int]:
     """
     counts: dict[str, int] = {
         "customers": ingest_csv_to_delta(
-            spark, CUSTOMERS_CSV, bronze_path("customers"), "customers"
+            spark, customers_csv(), bronze_path("customers"), "customers"
         ),
         "orders": ingest_csv_to_delta(
-            spark, ORDERS_CSV, bronze_path("orders"), "orders"
+            spark, orders_csv(), bronze_path("orders"), "orders"
         ),
         "products": ingest_csv_to_delta(
-            spark, PRODUCTS_CSV, bronze_path("products"), "products"
+            spark, products_csv(), bronze_path("products"), "products"
         ),
     }
     print("=== Bronze ingestion summary ===")

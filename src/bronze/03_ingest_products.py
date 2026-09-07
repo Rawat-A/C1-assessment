@@ -13,12 +13,11 @@ if str(_SRC) not in sys.path:
 
 from pyspark.sql import SparkSession
 
-from pipeline_config import PRODUCTS_CSV, bronze_path
+from pipeline_config import bronze_path, products_csv
 from bronze.ingest_utils import ingest_csv_to_delta
 
 
 ENTITY_NAME: str = "products"
-DELTA_PATH: str = bronze_path(ENTITY_NAME)
 
 
 def ingest_products(spark: SparkSession) -> int:
@@ -30,7 +29,9 @@ def ingest_products(spark: SparkSession) -> int:
     Returns:
         Number of rows ingested.
     """
-    return ingest_csv_to_delta(spark, PRODUCTS_CSV, DELTA_PATH, ENTITY_NAME)
+    return ingest_csv_to_delta(
+        spark, products_csv(), bronze_path(ENTITY_NAME), ENTITY_NAME
+    )
 
 
 def main() -> None:
