@@ -13,6 +13,8 @@ src/
   silver/            # Quality checks + quality_check_result column
   gold/              # SQL aggregations + create_gold_tables.py
   dashboard/         # Dashboard SQL queries
+notebooks/
+  run_medallion_pipeline.py   # Databricks notebook (import or open in workspace)
 data/                # Generated CSVs (not committed at scale)
 delta/               # Bronze/Silver/Gold Delta output (created at runtime)
 ```
